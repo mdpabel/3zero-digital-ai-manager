@@ -1,0 +1,74 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Employee {
+  id                String          @id @default(cuid())
+  userId            String          @unique // Clerk User ID
+  name              String?
+  email             String?         @unique
+  role              String?         @default("employee")
+  goal              String?
+  strategy          String?
+  active            Boolean         @default(true)
+  startDate         DateTime?
+  jobPeriodInMonths Int?
+  workLogs          WorkLog[]
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  WeeklySummary     WeeklySummary[]
+}
+
+model WorkLog {
+  id         String      @id @default(cuid())
+  employeeId String
+  date       DateTime
+  content    String
+  evaluation Evaluation?
+  employee   Employee    @relation(fields: [employeeId], references: [id])
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+model Evaluation {
+  id             String           @id @default(cuid())
+  workLogId      String           @unique
+  workLog        WorkLog          @relation(fields: [workLogId], references: [id])
+  score          Int
+  content        String
+  employeeId     String?
+  summary        String
+  createdAt      DateTime         @default(now())
+  ManagerComment ManagerComment[]
+}
+
+model ManagerComment {
+  id           String     @id @default(cuid())
+  evaluation   Evaluation @relation(fields: [evaluationId], references: [id])
+  evaluationId String
+  comment      String
+  createdAt    DateTime   @default(now())
+}
+
+model WeeklySummary {
+  id         String   @id @default(cuid())
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  employeeId String
+  startDate  DateTime
+  endDate    DateTime
+  summary    String
+  scoreAvg   Float
+  createdAt  DateTime @default(now())
+}
